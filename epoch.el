@@ -56,7 +56,7 @@ Argument ADVISED is `current-time'."
   (when-let* ((p (point))
               (default-time (or (org-get-scheduled-time p)
                                 (org-get-deadline-time  p)))
-              (ts (org-timestamp-from-time default-time)))
+              (ts (org-timestamp-from-time default-time 'with-time)))
     (org-read-date 'with-time 'to-time (org-element-interpret-data ts))))
 
 (defmacro epoch-with-time (time &rest body)
