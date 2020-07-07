@@ -30,6 +30,8 @@
 ;;; Code:
 (require 'org) ;;could be factored out. just using for org-read-date
 
+(declare-function org-agenda-todo  "org-agenda.el")
+(declare-function org-agenda-error "org-agenda.el")
 
 (defvar epoch-current-time nil
   "Stores the frozen time.")
@@ -49,14 +51,13 @@ Argument ADVISED is `current-time'."
       (advice-add #'current-time :around #'epoch-current-time-advice)
     (advice-remove #'current-time #'epoch-current-time-advice)))
 
-;;;###autoload
-(defun epoch-set-time (&optional time)
-  "Set `epoch-current-time' to TIME.
-If TIME is nil prompt for time."
-  (interactive)
-  (setq epoch-current-time
-        (or time
-            (org-read-date t t nil "Epoch time: "))))
+(defun epoch--timestamp-time ()
+  "Return scheduled time or deadline time from current org entry."
+  (when-let* ((p (point))
+              (default-time (or (org-get-scheduled-time p)
+                                (org-get-deadline-time  p)))
+              (ts (org-timestamp-from-time default-time)))
+    (org-read-date 'with-time 'to-time (org-element-interpret-data ts))))
 
 (defmacro epoch-with-time (time &rest body)
   "Execute BODY with `epoch-current-time' at TIME.
@@ -69,7 +70,15 @@ If TIME is nil, `current-time' is used."
        (unwind-protect
            (progn ,@body)
          (epoch-advice ,initial-state)))))
-;;KEEP ABOVE
+
+;;;###autoload
+(defun epoch-set-time (&optional time)
+  "Set `epoch-current-time' to TIME.
+If TIME is nil prompt for time."
+  (interactive)
+  (setq epoch-current-time
+        (or time
+            (org-read-date t t nil "Epoch time: "))))
 
 ;;;###autoload
 (define-minor-mode global-epoch-mode
@@ -86,19 +95,36 @@ If TIME is nil, `current-time' is used."
   "Call `org-todo' with `epoch-freeze-time' set to.
 Optional argument ARG is passed to `org-todo'."
   (interactive "P")
-  (let* ((p (point))
-         (default-time (or (org-get-scheduled-time p)
-                           (org-get-deadline-time  p)))
-         ;; (effort (org-entry-get p "Effort"))
-         ;;@Incomplete:
-         ;;if Effort prop, add that to hours and use that string
+  ;;@Incomplete:
+  ;;if Effort prop, add that to hours and use that string
+  (let* ((time (epoch--timestamp-time))
          (default-string
-           (format-time-string "%Y-%m-%d %H:%M" default-time)))
+           (format-time-string "%Y-%m-%d %H:%M" time)))
     (epoch-with-time
-      (org-read-date 'with-time 'to-time
-                     nil "Epoch todo @: "
-                     default-time default-string)
+      (org-read-date 'with-time 'to-time nil "Epoch todo @: " time default-string)
       (org-todo arg))))
+
+;;;###autoload
+(defun epoch-agenda-todo (&optional arg)
+  "Call `org-todo' with `epoch-current-time' set.
+ARG is passed to `org-todo'."
+  (interactive "P")
+  (let* ((marker (or (org-get-at-bol 'org-marker)
+                     (org-agenda-error)))
+         (buffer (marker-buffer marker))
+         (pos (marker-position marker))
+         entry-time)
+    (with-current-buffer buffer
+      (widen)
+      (goto-char pos)
+      (org-show-context 'agenda)
+      (setq entry-time (epoch--timestamp-time)))
+    (if entry-time
+        (let ((default-string (format-time-string "%Y-%m-%d %H:%M" entry-time)))
+          (epoch-with-time (org-read-date 'with-time 'to-time nil "Epoch Agenda todo @: "
+                                          entry-time default-string)
+            (call-interactively #'org-agenda-todo)))
+      (user-error "Epoch unable to get time for current entry"))))
 
 (provide 'epoch)
 
