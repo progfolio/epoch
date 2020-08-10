@@ -97,12 +97,16 @@ Optional argument ARG is passed to `org-todo'."
   (interactive "P")
   ;;@Incomplete:
   ;;if Effort prop, add that to hours and use that string
-  (let* ((time (epoch--timestamp-time))
+  (let* ((timestamp (epoch--timestamp-time))
          (default-string
-           (format-time-string "%Y-%m-%d %H:%M" time)))
-    (epoch-with-time
-      (org-read-date 'with-time 'to-time nil "Epoch todo @: " time default-string)
-      (org-todo arg))))
+           (format-time-string "%Y-%m-%d %H:%M" timestamp)))
+    (unwind-protect
+        (progn
+          (global-epoch-mode)
+          (epoch-set-time (org-read-date 'with-time 'to-time nil
+                                         "Epoch todo @: " timestamp default-string))
+          (org-todo arg))
+      (global-epoch-mode -1))))
 
 ;;;###autoload
 (defun epoch-agenda-todo (&optional arg)
@@ -112,19 +116,12 @@ ARG is passed to `org-todo'."
   (let* ((marker (or (org-get-at-bol 'org-marker)
                      (org-agenda-error)))
          (buffer (marker-buffer marker))
-         (pos (marker-position marker))
-         entry-time)
+         (pos (marker-position marker)))
     (with-current-buffer buffer
       (widen)
       (goto-char pos)
       (org-show-context 'agenda)
-      (setq entry-time (epoch--timestamp-time)))
-    (if entry-time
-        (let ((default-string (format-time-string "%Y-%m-%d %H:%M" entry-time)))
-          (epoch-with-time (org-read-date 'with-time 'to-time nil "Epoch Agenda todo @: "
-                                          entry-time default-string)
-            (call-interactively #'org-agenda-todo)))
-      (user-error "Epoch unable to get time for current entry"))))
+      (epoch-todo))))
 
 (provide 'epoch)
 
