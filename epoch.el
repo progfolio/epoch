@@ -42,7 +42,7 @@ Argument ADVISED is `current-time'."
   (or epoch-current-time (funcall advised)))
 
 (defun epoch-advice-enabled-p ()
-  "Return t if `epoch-current-time-advie' enabled, nil otherwise."
+  "Return t if `epoch-current-time-advice' enabled, nil otherwise."
   (and (advice-member-p #'epoch-current-time-advice 'current-time) t))
 
 (defun epoch-advice (&optional arg)
