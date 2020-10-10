@@ -33,6 +33,8 @@
 (declare-function org-agenda-todo  "org-agenda.el")
 (declare-function org-agenda-error "org-agenda.el")
 
+(defvar epoch-last-time nil
+  "Internal variable to pass epoch-current-time to other functions.")
 (defvar epoch-current-time nil
   "Stores the frozen time.")
 
@@ -41,6 +43,11 @@
 Argument ADVISED is `current-time'."
   (or epoch-current-time (funcall advised)))
 
+(defun epoch-float-time-advice (float-time &rest _args)
+  "Advise `float-time' to return `epoch-current-time'.
+Argument ADVISED is `current-time'."
+  (funcall float-time epoch-current-time))
+
 (defun epoch-advice-enabled-p ()
   "Return t if `epoch-current-time-advie' enabled, nil otherwise."
   (and (advice-member-p #'epoch-current-time-advice 'current-time) t))
@@ -48,8 +55,11 @@ Argument ADVISED is `current-time'."
 (defun epoch-advice (&optional arg)
   "If ARG is non-nil turn on freeze time. Otherwise turn it off."
   (if arg
-      (advice-add #'current-time :around #'epoch-current-time-advice)
-    (advice-remove #'current-time #'epoch-current-time-advice)))
+      (progn
+        (advice-add #'current-time :around #'epoch-current-time-advice)
+        (advice-add #'float-time :around #'epoch-float-time-advice))
+    (advice-remove #'current-time #'epoch-current-time-advice)
+    (advice-remove #'float-time   #'epoch-float-time-advice)))
 
 (defun epoch--timestamp-time ()
   "Return scheduled time or deadline time from current org entry."
@@ -90,6 +100,15 @@ If TIME is nil prompt for time."
       (epoch-advice t)
     (epoch-advice nil)))
 
+(defun epoch--last-repeat (org-entry-put &rest args)
+  "Filter `org-entry-put' args so we're using `epoch-last-time'."
+  (epoch-with-time epoch-last-time
+    (let ((time (list (format-time-string (org-time-stamp-format t t)
+                                          epoch-last-time)))
+          (args (butlast args)))
+      (apply org-entry-put (append args time))))
+  (advice-remove 'org-entry-put 'epoch--last-repeat))
+
 ;;;###autoload
 (defun epoch-todo (&optional arg)
   "Call `org-todo' with `epoch-freeze-time' set to.
@@ -100,13 +119,11 @@ Optional argument ARG is passed to `org-todo'."
   (let* ((timestamp (epoch--timestamp-time))
          (default-string
            (format-time-string "%Y-%m-%d %H:%M" timestamp)))
-    (unwind-protect
-        (progn
-          (global-epoch-mode)
-          (epoch-set-time (org-read-date 'with-time 'to-time nil
-                                         "Epoch todo @: " timestamp default-string))
-          (org-todo arg))
-      (global-epoch-mode -1))))
+    (epoch-with-time (org-read-date 'with-time 'to-time nil "Epoch todo @: "
+                                    timestamp default-string)
+      (when org-log-repeat (setq epoch-last-time epoch-current-time)
+            (advice-add 'org-entry-put :around 'epoch--last-repeat))
+      (org-todo arg))))
 
 ;;;###autoload
 (defun epoch-agenda-todo (&optional arg)
