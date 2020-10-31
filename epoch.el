@@ -44,7 +44,7 @@ Argument ADVISED is `current-time'."
   (or epoch-current-time (funcall advised)))
 
 (defun epoch-float-time-advice (float-time &rest _args)
-  "Advise `float-time' to return `epoch-current-time'.
+  "Advise `FLOAT-TIME' to return `epoch-current-time'.
 Argument ADVISED is `current-time'."
   (funcall float-time epoch-current-time))
 
