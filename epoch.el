@@ -28,7 +28,12 @@
 ;; Freeze (current-time).
 
 ;;; Code:
-(require 'org) ;;could be factored out. just using for org-read-date
+(require 'org) ;;should be factored out.
+
+(defgroup doct nil
+  "EPOCH: freeze Emacs current time"
+  :group 'epoch
+  :prefix "epoch-")
 
 (declare-function org-agenda-todo  "org-agenda.el")
 (declare-function org-agenda-error "org-agenda.el")
@@ -49,7 +54,7 @@ Argument ADVISED is `current-time'."
   (funcall float-time epoch-current-time))
 
 (defun epoch-advice-enabled-p ()
-  "Return t if `epoch-current-time-advie' enabled, nil otherwise."
+  "Return t if `epoch-current-time-advice' enabled, nil otherwise."
   (and (advice-member-p #'epoch-current-time-advice 'current-time) t))
 
 (defun epoch-advice (&optional arg)
@@ -93,6 +98,7 @@ If TIME is nil prompt for time."
 ;;;###autoload
 (define-minor-mode global-epoch-mode
   "Freeze time."
+  :group 'epoch
   :lighter " ⏱"
   :keymap (make-sparse-keymap)
   :global t
@@ -101,7 +107,7 @@ If TIME is nil prompt for time."
     (epoch-advice nil)))
 
 (defun epoch--last-repeat (org-entry-put &rest args)
-  "Filter `org-entry-put' args so we're using `epoch-last-time'."
+  "Filter `ORG-ENTRY-PUT' ARGS so we're using `epoch-last-time'."
   (epoch-with-time epoch-last-time
     (let ((time (list (format-time-string (org-time-stamp-format t t)
                                           epoch-last-time)))
