@@ -122,11 +122,9 @@ Optional argument ARG is passed to `org-todo'."
   (interactive "P")
   ;;@Incomplete:
   ;;if Effort prop, add that to hours and use that string
-  (let* ((timestamp (epoch--timestamp-time))
-         (default-string
-           (format-time-string "%Y-%m-%d %H:%M" timestamp)))
+  (let* ((timestamp (epoch--timestamp-time)))
     (epoch-with-time (org-read-date 'with-time 'to-time nil "Epoch todo @: "
-                                    timestamp default-string)
+                                    timestamp)
       (when org-log-repeat (setq epoch-last-time epoch-current-time)
             (advice-add 'org-entry-put :around 'epoch--last-repeat))
       (org-todo arg))))
