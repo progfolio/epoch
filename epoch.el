@@ -68,10 +68,17 @@ Argument ADVISED is `current-time'."
     (advice-remove #'float-time   #'epoch-float-time-advice)))
 
 (defun epoch--timestamp-time ()
-  "Return scheduled time or deadline time from current org entry."
+  "Return scheduled, deadline, or first timestamp time from current org entry."
   (when-let* ((p (point))
               (default-time (or (org-get-scheduled-time p)
-                                (org-get-deadline-time  p)))
+                                (org-get-deadline-time  p)
+                                (save-excursion
+                                  (unless (org-at-heading-p) (org-back-to-heading))
+                                  (save-restriction
+                                    (org-narrow-to-subtree)
+                                    (beginning-of-line)
+                                    (when (re-search-forward org-ts-regexp)
+                                      (org-time-string-to-time (match-string 0)))))))
               (ts (org-timestamp-from-time default-time 'with-time)))
     (org-read-date 'with-time 'to-time (org-element-interpret-data ts))))
 
