@@ -150,7 +150,7 @@ ARG is passed to `org-todo'."
       (widen)
       (goto-char pos)
       (org-show-context 'agenda)
-      (epoch-todo))))
+      (epoch-todo arg))))
 
 (provide 'epoch)
 
