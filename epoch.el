@@ -31,7 +31,7 @@
 (require 'org) ;;should be factored out.
 
 (defgroup epoch nil
-  "EPOCH: freeze Emacs current time"
+  "EPOCH: freeze Emacs current time."
   :group 'epoch
   :prefix "epoch-")
 
