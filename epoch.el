@@ -138,6 +138,8 @@ Optional argument ARG is passed to `org-todo'."
       (org-todo arg))))
 
 ;;;###autoload
+;;@FIX: This doesn't do the right thing sometimes if target buffer
+;; is being visited in another window.
 (defun epoch-agenda-todo (&optional arg)
   "Call `org-todo' with `epoch-current-time' set.
 ARG is passed to `org-todo'."
