@@ -39,7 +39,7 @@
 (declare-function org-agenda-error "org-agenda.el")
 
 (defvar epoch-last-time nil
-  "Internal variable to pass epoch-current-time to other functions.")
+  "Internal variable to pass `epoch-current-time' to other functions.")
 
 (defvar epoch-current-time nil
   "Stores the frozen time.")
