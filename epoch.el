@@ -85,7 +85,7 @@ Argument ADVISED is `current-time'."
 (defmacro epoch-with-time (time &rest body)
   "Execute BODY with `epoch-current-time' at TIME.
 If TIME is nil, `current-time' is used."
-  (declare (indent defun))
+  (declare (indent defun) (debug t))
   (let ((initial-state (make-symbol "initial-state")))
     `(let ((,initial-state (epoch-advice-enabled-p))
            (epoch-current-time ,time))
