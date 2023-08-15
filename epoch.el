@@ -116,12 +116,18 @@ If TIME is nil prompt for time."
 
 (defun epoch--last-repeat (org-entry-put &rest args)
   "Filter `ORG-ENTRY-PUT' ARGS so we're using `epoch-last-time'."
+  (advice-remove 'org-entry-put 'epoch--last-repeat)
   (epoch-with-time epoch-last-time
     (let ((time (list (format-time-string (org-time-stamp-format t t)
                                           epoch-last-time)))
           (args (butlast args)))
-      (apply org-entry-put (append args time))))
-  (advice-remove 'org-entry-put 'epoch--last-repeat))
+      (apply org-entry-put (append args time))
+      (advice-add 'org-store-log-note :around
+                  (lambda (fn &rest args)
+                    (advice-remove 'org-store-log-note 'epoch--log-note)
+                    (epoch-with-time epoch-last-time
+                      (let ((org-log-note-effective-time epoch-last-time)) (apply fn args))))
+                  '((name .  epoch--log-note))))))
 
 ;;;###autoload
 (defun epoch-todo (&optional arg)
