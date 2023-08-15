@@ -151,7 +151,7 @@ ARG is passed to `org-todo'."
     (with-current-buffer buffer
       (widen)
       (goto-char pos)
-      (org-show-context 'agenda)
+      (org-fold-show-context 'agenda)
       (epoch-todo arg))))
 
 (provide 'epoch)
