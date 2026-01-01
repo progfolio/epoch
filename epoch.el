@@ -1,5 +1,5 @@
 ;;; epoch.el --- Epoch: freeze time  -*- lexical-binding: t; -*-
-;; Copyright (C) 2020-2024 Nicholas Vollmer
+;; Copyright (C) 2020-2026 Nicholas Vollmer
 
 ;; Author: Nicholas Vollmer <progfolio@protonmail.com>
 ;; URL: https://github.com/progfolio/epoch
